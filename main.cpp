@@ -14,7 +14,8 @@
  *          of the remaining fertile land. Input is from STDIN and output is to
  *          STDOUT.
  *
- *          Ex: $ barren_land_analysis.exe {"4 0 7 9"}
+ *          Ex: $ barren_land_analysis --width 10 --length 10
+ *              {"4 0 7 9"}
  *              20 40
  *
  *          9 | .  .  .  .  X  X  X  X  .  .
@@ -35,110 +36,80 @@
  *          fertile land. This program calculates those areas and displays
  *          them on STDOUT from least to greatest. The result being "20 40".
  *
- *          The default farm area is 400 by 600. The program accepts command
- *          line arguments for easier use from the shell. If executed without
- *          arguments, the program will take input from STDIN.
+ *          Executed without command-line arguments, the default farm size is
+ *          400 by 600. With command-line arguments (as shown in the example
+ *          above), the program can simulate a farm of the desired length and
+ *          width. If run with the --test argument, the program will run
+ *          through a series of test farms and display each output.
  */
 
 
 /*-Preprocessor Directives----------------------------------------------------*/
-#include <algorithm>
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <regex>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include "Barren.h"
-#include "Farm.h"
+#include "Farm_Runner.h"
+#include <cassert>  // assert()
+#include <cstdlib>  // exit()
+#include <cstring>  // strcmp()
+#include <iostream> // cin, cout
 /*----------------------------------------------------------------------------*/
 
 
+//----------------------------------------------------------------------------//
+// check_args:                                                                //
+//      Inputs:     int - argc (argument count)                               //
+//                  char** - argv (ragged char array of argument values)      //
+//      Outputs:    bool - true if arguments are valid, false otherwise       //
 bool check_args(int argc, char* argv[]);
+
 
 //----------------------------------------------------------------------------//
 // main:                                                                      //
-//      Inputs:     string from STDIN                                         //
-//      Outputs:    string of areas to STDOUT                                 //
+//      Inputs:     argc, argv from command line                              //
+//                  string - read from STDIN                                  //
+//      Outputs:    string - areas sent to STDOUT                             //
 int main(int argc, char* argv[]) {
     assert(check_args(argc, argv) && "Check usage.");
 
+    if (argc == 2) {
+        run_test_suite();
+        exit(EXIT_SUCCESS);
+    }
+
+    // Set width and length based on command line args, if applicable.
     int width, length;
-    if (argc == 1) {
+
+    if (argc == 1) { /* no args */
         width = 400;
         length = 600;
     }
-    else if (argc == 5) {
+    else { /* argc must be 5 */
         if ((std::strcmp(argv[1],"-w") == 0 || std::strcmp(argv[1],"--width") == 0)) {
-            width = std::stoi(argv[1]);
-            length = std::stoi(argv[3]);
-        }
-        else if ((std::strcmp(argv[1],"-l") == 0 || std::strcmp(argv[1],"--length") == 0)) {
-                length = std::stoi(argv[1]);
-                width = std::stoi(argv[3]);
+            width = std::stoi(std::string(argv[2]));
+            length = std::stoi(std::string(argv[4]));
         }
         else {
-            std::cerr << "Usage error." << std::endl;
-            exit(EXIT_FAILURE);
+            length = std::stoi(std::string(argv[2]));
+            width = std::stoi(std::string(argv[4]));
         }
     }
-    else {
-        std::cerr << "Usage error." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
 
     std::string line;
     std::getline(std::cin, line);
-    std::istringstream stream(std::regex_replace(line,
-            std::regex{R"(\{|\}|,|\")"}, " "));
-    std::vector<int> coords;
-    int coord;
-    while(stream >> coord) {
-        coords.push_back(coord);
-    }
-
-    std::vector<Barren> barren_v;
-
-    if (coords.size() % 4 != 0) {
-        std::cerr << "Invalid number of arguments. Read " << coords.size()
-                    << " args." << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    else {
-        for (int i = 0; i < coords.size(); i += 4) {
-            barren_v.emplace_back(Barren(coords[i],
-                                         coords[i+1],
-                                         coords[i+2],
-                                         coords[i+3]));
-        }
-    }
-
-    Farm f(width, length);
-
-    for (auto b: barren_v) {
-        f.add_barren(b);
-    }
-
-    std::vector<int> f_areas = f.get_fertile_area();
-    std::cout << f_areas[0];
-    for(int i = 1; i < f_areas.size(); i++) {
-        std::cout << " " << f_areas[i];
-    }
-    std::cout << std::endl;
+    std::cout << run_farm(line, width, length) << std::endl;
 
     exit(EXIT_SUCCESS);
 }
+
 
 bool check_args(int argc, char* argv[]) {
     if (argc == 1) {
         return true;
     }
 
-    if (argc != 5) {
+    if (argc == 2 && std::strcmp(argv[1],"--test") == 0) {
+        return true;
+    }
+
+    if (argc != 5) { // argc == 5 is only valid option left
         return false;
     }
 
