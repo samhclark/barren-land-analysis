@@ -7,10 +7,10 @@
 #ifndef FARM_H
 #define FARM_H
 
-#include <algorithm>
 #include "Barren.h"
+#include <algorithm>  // TODO: Rewrite sort in get_fertile_area()
 #include <cassert>
-#include <iostream>
+#include <iostream> // TODO: Rewrite display_farm() to return a string
 #include <vector>
 
 
@@ -90,8 +90,8 @@ Farm::Farm() {
 }
 
 Farm::Farm(int w, int l) {
-    assert(width >= 0 && "Width must be positive.");
-    assert(length >= 0 && "Length must be positive.");
+    assert(w >= 0 && "Width must be positive.");
+    assert(l >= 0 && "Length must be positive.");
 
     width = w;
     length = l;
